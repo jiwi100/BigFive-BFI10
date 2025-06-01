@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BFI-10 Persönlichkeitstest</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0 auto;
+            max-width: 800px;
+            padding: 20px;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #0056b3;
+        }
+        .instructions, .question-group {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .question-item {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .question-item:last-child {
+            border-bottom: none;
+        }
+        .options {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        button {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #results {
+            margin-top: 25px;
+            padding: 20px;
+            background-color: #e9f5ff;
+            border: 1px solid #b3d7ff;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>BFI-10 Persönlichkeitstest</h1>
+
+    <div class="instructions">
+        <p>Bitte geben Sie für die folgenden Aussagen an, inwieweit diese auf Sie zutreffen. Es gibt keine richtigen oder falschen Antworten.</p>
+        <p><b>Bewertungsskala:</b> 1 = stimme überhaupt nicht zu, 5 = stimme voll und ganz zu</p>
+    </div>
+
+    <form id="bfi-form">
+        <div class="question-group">
+            <p><b>Ich sehe mich als jemanden, der...</b></p>
+            <div id="questions-container"></div>
+        </div>
+        <button type="button" onclick="calculateResults()">Ergebnis Auswerten</button>
+    </form>
+
+    <div id="results" style="display:none;">
+        <h2>Ihr Ergebnis</h2>
+        <div id="result-text"></div>
+    </div>
+
+    <script>
+        const questions = [
+            { text: "...eher zurückhaltend, reserviert ist.", id: 1, reverse: true },
+            { text: "...im Allgemeinen vertrauensvoll ist.", id: 2, reverse: false },
+            { text: "...bequem ist, zu Faulheit neigt.", id: 3, reverse: true },
+            { text: "...entspannt ist, mit Stress gut umgehen kann.", id: 4, reverse: true },
+            { text: "...wenig künstlerisches Interesse hat.", id: 5, reverse: true },
+            { text: "...kontaktfreudig, gesellig ist.", id: 6, reverse: false },
+            { text: "...dazu neigt, andere zu kritisieren.", id: 7, reverse: true },
+            { text: "...Aufgaben gründlich erledigt.", id: 8, reverse: false },
+            { text: "...leicht nervös wird.", id: 9, reverse: false },
+            { text: "...eine rege Vorstellungskraft hat, fantasievoll ist.", id: 10, reverse: false }
+        ];
+
+        const questionsContainer = document.getElementById('questions-container');
+        questions.forEach((q, index) => {
+            const item = document.createElement('div');
+            item.className = 'question-item';
+            let optionsHtml = '<div class="options">';
+            for (let i = 1; i <= 5; i++) {
+                optionsHtml += `
+                    <label>
+                        <input type="radio" name="q${q.id}" value="${i}" required>
+                        ${i}
+                    </label>
+                `;
+            }
+            optionsHtml += '</div>';
+            item.innerHTML = `<label>${q.text}</label>${optionsHtml}`;
+            questionsContainer.appendChild(item);
+        });
+
+        function calculateResults() {
+            const form = document.getElementById('bfi-form');
+            if (!form.checkValidity()) {
+                alert("Bitte beantworten Sie alle Fragen.");
+                return;
+            }
+
+            const answers = {};
+            questions.forEach(q => {
+                const value = parseInt(document.querySelector(`input[name="q${q.id}"]:checked`).value);
+                answers[q.id] = q.reverse ? 6 - value : value;
+            });
+            
+            const results = {
+                extraversion: (answers[1] + answers[6]) / 2,
+                agreeableness: (answers[2] + answers[7]) / 2,
+                conscientiousness: (answers[3] + answers[8]) / 2,
+                neuroticism: (answers[4] + answers[9]) / 2,
+                openness: (answers[5] + answers[10]) / 2
+            };
+
+            const resultText = `
+                <ul>
+                    <li><b>Extraversion:</b> ${results.extraversion.toFixed(2)}</li>
+                    <li><b>Verträglichkeit:</b> ${results.agreeableness.toFixed(2)}</li>
+                    <li><b>Gewissenhaftigkeit:</b> ${results.conscientiousness.toFixed(2)}</li>
+                    <li><b>Neurotizismus (Emotionale Stabilität):</b> ${results.neuroticism.toFixed(2)}</li>
+                    <li><b>Offenheit für Erfahrungen:</b> ${results.openness.toFixed(2)}</li>
+                </ul>
+                <p>Ein Wert über 3.0 deutet auf eine höhere Ausprägung hin, ein Wert unter 3.0 auf eine niedrigere. Dies ist eine Momentaufnahme und keine klinische Diagnose.</p>
+            `;
+            
+            document.getElementById('result-text').innerHTML = resultText;
+            document.getElementById('results').style.display = 'block';
+            window.scrollTo(0, document.body.scrollHeight);
+        }
+    </script>
+
+</body>
+</html>
